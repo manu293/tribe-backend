@@ -2,6 +2,7 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require("cors");
+const nodemailer = require("nodemailer");
 
 // local imports
 const User = require("./models/user.model");
@@ -30,7 +31,7 @@ app.get('/', (req, res) => {
     res.json({"message": "Server is running :D"});
 });
 
-app.post("/api/v1/register", (req, resp) => {
+app.post("/api/v1/register", async (req, resp) => {
     console.log("req.ndy", req.body)
     const {userName, email, phone, password} = req.body;
 
@@ -62,7 +63,7 @@ app.post("/api/v1/register", (req, resp) => {
             status: false,
         });
     } else {
-        User.find({"email": email})
+        await User.find({"email": email})
         .then((res) => {
             if (res.length !== 0) {
                 resp.json({
@@ -74,7 +75,25 @@ app.post("/api/v1/register", (req, resp) => {
                 newUser._id = new mongoose.Types.ObjectId();
 
                 newUser.save()
-                .then(() => {
+                .then(async() => {
+
+                    const transporter = nodemailer.createTransport({
+                        host: 'smtp.gmail.com',
+                        port: 465,
+                        secure: true,
+                        auth: {
+                            user: 'manojsm293@gmail.com',
+                            pass: 'syrtolrirnvcxkzo'
+                        }
+                    });
+            
+                    await transporter.sendMail({
+                        from: '"Team Tribe" <backend@teamtribe.com>',
+                        to: email,
+                        subject: "Welcome Message",
+                        text: "Welcome to Tribe Backend",
+                    });
+
                     resp.json({
                         message: "EUser registed successfully",
                         status: true,
@@ -92,10 +111,55 @@ app.post("/api/v1/register", (req, resp) => {
 
 });
 
+app.post("/api/v1/sendEmail", async (req, resp) => {
+    const {email} = req.body;
+
+    if (Object.keys(req.body).length === 0) {
+        resp.json({
+            message: "Provide valid inputs",
+            status: false,
+        });
+    } else if (email.length === 0) {
+        resp.json({
+            message: "Enter a valid email",
+            status: false,
+        });
+    } else {
+
+        const transporter = nodemailer.createTransport({
+            host: 'smtp.gmail.com',
+            port: 465,
+            secure: true,
+            auth: {
+                user: 'manojsm293@gmail.com',
+                pass: 'syrtolrirnvcxkzo'
+            }
+        });
+
+        const messageiInfo = await transporter.sendMail({
+            from: '"Team Tribe" <backend@teamtribe.com>',
+            to: email,
+            subject: "Welcome Message",
+            text: "Welcome to Tribe Backend",
+        });
+
+        if (messageiInfo.messageId) {
+            resp.json({
+                message: "Email sent successfully",
+                status: true,
+            });
+        } else {
+            resp.json({
+                message: "Could not send email",
+                status: false,
+            });
+        }
+    }
+
+})
+
 const PORT = process.env.PORT || 3001;
 
 app.listen(PORT, () => {
     console.log(`Server is listening on port ${PORT}`);
 });
-
-// mongodb+srv://tribe:<password>@tribebackend.yruf4.mongodb.net/myFirstDatabase?retryWrites=true&w=majority
