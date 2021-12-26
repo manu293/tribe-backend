@@ -12,9 +12,8 @@ const app = express();
 const mongoose = require('mongoose');
 mongoose.Promise = global.Promise;
 
-const MONGODB_URL = process.env.mongoDB_UR || "mongodb+srv://tribe:tribe12345@tribebackend.yruf4.mongodb.net/myFirstDatabase?retryWrites=true&w=majority"
 
-mongoose.connect(MONGODB_URL, {
+mongoose.connect(process.env.mongoDB_URI, {
     useNewUrlParser: true
 }).then(() => {
     console.log("Successfully connected to the database");    
@@ -23,7 +22,6 @@ mongoose.connect(MONGODB_URL, {
     process.exit();
 });
 
-// app.use(bodyParser.urlencoded({ extended: true }))
 app.use(cors());
 app.use(bodyParser.json())
 
@@ -32,7 +30,6 @@ app.get('/', (req, res) => {
 });
 
 app.post("/api/v1/register", async (req, resp) => {
-    console.log("req.ndy", req.body)
     const {userName, email, phone, password} = req.body;
 
     if (Object.keys(req.body).length === 0) {
@@ -131,8 +128,8 @@ app.post("/api/v1/sendEmail", async (req, resp) => {
             port: 465,
             secure: true,
             auth: {
-                user: 'manojsm293@gmail.com',
-                pass: 'syrtolrirnvcxkzo'
+                user: process.env.mailUserName,
+                pass: process.env.mailPassword,
             }
         });
 
